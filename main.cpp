@@ -206,7 +206,6 @@ void generateResult1(string path1, string path2, string path3, vector<cinema>& c
                 k++;
                 printOneFilm(k, c.name, film);
                 saveOneFilm(k, c.name, film, fs);
-                //fs << " " << k << " | '" << c.name << "' | '" << film << "'" << endl;
             }
         }
     }
@@ -485,13 +484,6 @@ int main()
         startCycle(cinemas);
         _getch();
     }
-    cout << "\nСортировка кинотеатров по фильмам...";
-    sortCinemasByfilms(cinemas);
-    cout << "\nСортировка кинотеатров по названию кинотеатра...";
-    sortCinemasByName(cinemas);
-    printCinemas(cinemas);
-    //generateResult(path1, path2, path3, cinemas);
-    toEng(cinemas);
 
     return 0;
 }
