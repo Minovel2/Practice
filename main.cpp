@@ -110,27 +110,27 @@ void from_json(const nlohmann::json& j, cinema& p) {
 }
 
 void beforePrint() {
-    cout << setw(8) << " id |";
-    cout << setw(26) << " Имя кинотеатра |";
-    cout << setw(23) << " Фильм |";
-    cout << "\n---------------------------------------------------------\n";
+    cout << " id | ";
+    cout << "Имя кинотеатра       | ";
+    cout << "Фильм                | ";
+    cout << "\n---------------------------------------------------\n";
 }
 void beforePrintInFile(fstream& fs) {
-    fs << setw(8) << " id |";
-    fs << setw(26) << " Имя кинотеатра |";
-    fs << setw(23) << " Фильм |";
-    fs << "\n---------------------------------------------------------\n";
+    fs << " id | ";
+    fs << "Имя кинотеатра       | ";
+    fs << "Фильм                | ";
+    fs << "\n---------------------------------------------------\n";
 }
 
 void printOneFilm(int id, string name, string film) {
-    cout << setw(5) << " " << id << " |";
-    cout << setw(20) << " " << toRus(name) << " |";
-    cout << setw(20) << " " << toRus(film) << " |" << endl;
+    cout << " " << setw(2) << id << " | ";
+    cout << setw(20) << toRus(name) << " | ";
+    cout << setw(20) << toRus(film) << " | " << endl;
 }
 void saveOneFilm(int id, string name, string film, fstream& fs) {
-    fs << setw(5) << " " << id << " |";
-    fs << setw(20) << " " << toRus(name) << " |";
-    fs << setw(20) << " " << toRus(film) << " |" << endl;
+    fs << " " << setw(2) << id << " | ";
+    fs << setw(20) << toRus(name) << " | ";
+    fs << setw(20) << toRus(film) << " | " << endl;
 }
 
 void printCinemas(vector<cinema>& cinemas) {
@@ -372,6 +372,7 @@ int main()
     setlocale(LC_ALL, "rus");
     system("chcp 1251");
     using namespace std;
+    cout << setiosflags(ios::left);
     
     fstream fs;
     vector<cinema> cinemas;
