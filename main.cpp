@@ -122,6 +122,43 @@ void beforePrintInFile(fstream& fs) {
     fs << "\n---------------------------------------------------\n";
 }
 
+bool addFilm(vector<cinema>& cinemas, string name, string film) {
+    for (vector<cinema>::iterator i = cinemas.begin(); i < cinemas.end(); i++) {
+        cinema& j = *i;
+        if (j.name == name) {
+            if (find(j.films.begin(), j.films.end(), film) != j.films.end()) {
+                return false;
+            }
+            else {
+                j.films.push_back(film);
+                return true;
+            }
+        }
+    }
+    cinema c = { name, {film} };
+    cinemas.push_back(c);
+    return true;
+}
+
+bool updateCinema(vector<cinema>& cinemas) {
+    string name, film;
+    cout << "Введите название кинотеатра, который хотите добавить/обновить: ";
+    getline(cin, name);
+    if (cin.fail()) {
+        cout << "Ошибка";
+        return false;
+    }
+    cout << "Введите название фильма, который хотите добавить: ";
+    getline(cin, film);
+    if (cin.fail()) {
+        cout << "Ошибка";
+        return false;
+    }
+    addFilm(cinemas, name, film);
+    cout << "Добавлено!";
+    return true;
+}
+
 void printOneFilm(int id, string name, string film) {
     cout << " " << setw(2) << id << " | ";
     cout << setw(20) << toRus(name) << " | ";
@@ -131,6 +168,20 @@ void saveOneFilm(int id, string name, string film, fstream& fs) {
     fs << " " << setw(2) << id << " | ";
     fs << setw(20) << toRus(name) << " | ";
     fs << setw(20) << toRus(film) << " | " << endl;
+}
+
+void saveToFile(vector<cinema>& cinemas) {
+    toEng(cinemas);
+    nlohmann::json j = cinemas;
+    fstream fs;
+    string p;
+    cout << "Введите название файла без расширения: ";
+    cin >> p;
+    p += ".json";
+    fs.open(p, fstream::out);
+    fs << j;
+    fs.close();
+    toRus(cinemas);
 }
 
 void printCinemas(vector<cinema>& cinemas) {
@@ -289,10 +340,10 @@ void generateResult3(string path1, string path2, string path3, vector<cinema>& c
     fs.close();
 }
 
-const int buttonsCount = 9;
+const int buttonsCount = 10;
 
 void showMenu(int menu, vector<cinema>& cinemas) {
-    string* text = new string[buttonsCount]{ "1. найти кинотеатры, среди которых есть вводимый фильм", "2. найти кинотеатры с одинаковым репертуаром", "3. найти список фильмов вводимого кинотеатра", "4. отсортировать по названию кинотеатра (по возрастанию)", "5. отсортировать по названию кинотеатра (по убыванию)", "6. отсортировать по фильмам (по возрастанию)", "7. отсортировать по фильмам (по убыванию)", "8. добавить фильм (в разработке)", "9. Удалить кинотеатр (в разработке)"};
+    string* text = new string[buttonsCount]{ "1. Найти кинотеатры, среди которых есть вводимый фильм", "2. Найти кинотеатры с одинаковым репертуаром", "3. Найти список фильмов вводимого кинотеатра", "4. Отсортировать по названию кинотеатра (по возрастанию)", "5. Отсортировать по названию кинотеатра (по убыванию)", "6. Отсортировать по фильмам (по возрастанию)", "7. Отсортировать по фильмам (по убыванию)", "8. Добавить фильм/кинотеатр", "9. Удалить фильм/кинотеатр", "10. Сохранить в файл"};
     system("cls");
     printCinemas(cinemas);
     cout << endl;
@@ -308,8 +359,7 @@ void showMenu(int menu, vector<cinema>& cinemas) {
     }
 }
 
-void startCycle(vector<cinema>& cinemas) {
-    int menu = 0;
+void startCycle(vector<cinema>& cinemas, int& menu) {
     showMenu(menu, cinemas);
     int ch;
     bool cycle = true;
@@ -357,10 +407,13 @@ void startCycle(vector<cinema>& cinemas) {
                 sortCinemasByfilms(cinemas, 0);
                 break;
             case 7:
-                cout << 7;
+                updateCinema(cinemas);
                 break;
             case 8:
                 cout << 8;
+                break;
+            case 9:
+                saveToFile(cinemas);
                 break;
             }
         }
@@ -417,12 +470,9 @@ int main()
             string film, name;
             getline(cin, name);
             for (int i = 0; i < cinemasCount; i++) {
-                cinema c;
                 cout << "Введите название кинотеатра " << i + 1 << ": ";
                 cin.sync();
                 getline(cin, name);
-
-                c.name = toEng(name);
 
                 cout << "Сколько фильмов будет в кинотеатре?: ";
                 cin >> filmsCount;
@@ -433,10 +483,9 @@ int main()
                     cin.sync();
 
                     getline(cin, film);
-                    c.films.push_back(toEng(film));
+                    addFilm(cinemas, toEng(name), toEng(film));
 
                 }
-                cinemas.push_back(c);
             }
             printCinemas(cinemas);
         }
@@ -455,7 +504,6 @@ int main()
             fs.open(p, fstream::out);
             fs << j;
             fs.close();
-
         }
     }
     else {
@@ -481,8 +529,9 @@ int main()
     string str;
     getline(cin, str);
     toRus(cinemas);
+    int menu = 0;
     while (true) {
-        startCycle(cinemas);
+        startCycle(cinemas, menu);
         _getch();
     }
 
