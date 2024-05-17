@@ -176,7 +176,7 @@ void removeCinema(vector<cinema>& cinemas, string& name) {
     }
 }
 
-bool removeProcess(vector<cinema>& cinemas) {
+void removeProcess(vector<cinema>& cinemas) {
     printCinemas(cinemas);
     bool mode;
     string name, film;
@@ -184,16 +184,17 @@ bool removeProcess(vector<cinema>& cinemas) {
     cin >> mode;
     if (cin.fail()) {
         cout << "Ошибка.";
-        return false;
+        return;
     }
 
     cout << "Введите название кинотеатра: ";
-    cin.ignore();
+    if (cin.peek() == '\n') cin.ignore();
     getline(cin, name);
 
     if (mode) {
         removeCinema(cinemas, name);
         cout << "Удалено!";
+        return;
     }
     else {
         cout << "Введите фильм кинотеатра: ";
@@ -203,15 +204,18 @@ bool removeProcess(vector<cinema>& cinemas) {
         if (iter != c.films.end()) {
             if (c.films.size() == 1) {
                 removeCinema(cinemas, name);
+                cout << "Удалено!";
+                return;
             }
             else {
                 c.films.erase(iter);
+                cout << "Удалено!";
+                return;
             }
 
         }
-        cout << "Удалено!";
-        return true;
     }
+    cout << "Не удалено, возможно такого фильма или кинотеатра не существует.";
 }
 
 bool addFilm(vector<cinema>& cinemas, string name, string film) {
@@ -320,7 +324,7 @@ void generateResult1(string path1, string path2, string path3, vector<cinema>& c
     fstream fs;
     fs.open(path1 + ".txt", fstream::out);
     cout << "\n1. Введите фильм, который будет искаться в репертуаре кинотеатров: ";
-    cin.ignore();
+    if (cin.peek() == '\n') cin.ignore();
     getline(cin, film);
     cout << "Кинотеатры, содержащие фильм " << film << ":" << endl;
     beforePrint();
@@ -409,17 +413,19 @@ void generateResult2(string path1, string path2, string path3, vector<cinema>& c
 }
 
 void generateResult3(string path1, string path2, string path3, vector<cinema>& cinemas) {
+    vector<cinema> cinemasCopy = cinemas;
     int k = 0;
     string name;
     fstream fs;
-    cout << "\n" << "3. Имя кинотеатра, список фильмов которого вывести в консоль: ";
+    cout << "\n3. Имя кинотеатра, список фильмов которого вывести в консоль: ";
+    if (cin.peek() == '\n') cin.ignore();
     getline(cin, name);
     cout << "Фильмы кинотеатра " << name << ":\n";
     fs.open(path3 + ".txt", fstream::out);
     beforePrint();
     beforePrintInFile(fs);
 
-    for (vector<cinema>::iterator i = cinemas.begin(); i < cinemas.end(); i++) {
+    for (vector<cinema>::iterator i = cinemas.begin(); i < cinemas.end(); ) {
         cinema& c = *i;
         if (c.name == name) {
             for (vector<string>::iterator j = c.films.begin(); j < c.films.end(); j++) {
@@ -428,10 +434,19 @@ void generateResult3(string path1, string path2, string path3, vector<cinema>& c
                 printOneFilm(k, name, film);
                 saveOneFilm(k, name, film, fs);
             }
-            break;
+            i++;
+        }
+        else {
+            i = cinemas.erase(i);
         }
     }
     fs.close();
+    bool mode;
+    cout << "Скопировать таблицу? (1 - да, 0 - нет): ";
+    cin >> mode;
+    if (!mode || cin.fail()) {
+        cinemas = cinemasCopy;
+    }
 }
 
 const int buttonsCount = 10;
@@ -529,7 +544,7 @@ int main()
     fs >> path2;
     fs >> path3;
     fs.close();
-    cout << "Список кинотетров, в названии которых есть фильм, название которого введено с клавиатуры, запишется в файл: " << path1 << "\nСписок кинотеатров с одинаковым репертуаром запишется в файл: " << path2 << "\nСписок фильмов, демонстрирующихся в кинотеатре, название которого вводится с клавиатуры, запишется в файл: " << path3 << endl;
+    cout << "Список кинотетров, в названии которых есть фильм, название которого введено с клавиатуры, запишется в файл: " << path1 << ".txt\nСписок кинотеатров с одинаковым репертуаром запишется в файл: " << path2 << ".txt\nСписок фильмов, демонстрирующихся в кинотеатре, название которого вводится с клавиатуры, запишется в файл: " << path3 << ".txt" << endl;
     cout << "Желаете изменить файлы, в которые запишется результат? 1 - да, 0 - нет: ";
     bool mode;
     cin >> mode;
