@@ -176,10 +176,8 @@ void saveOneFilm(int id, string name, string film, fstream& fs) {
 void printCinemas(vector<cinema>& cinemas) {
     int k = 1;
     beforePrint();
-    for (vector<cinema>::iterator i = cinemas.begin(); i < cinemas.end(); i++) {
-        cinema& j = *i;
-        for (vector<string>::iterator i = j.films.begin(); i < j.films.end(); i++) {
-            string& film = *i;
+    for (cinema& j : cinemas) {
+        for (string& film : j.films) {
             printOneFilm(k, j.name, film);
             k++;
         }
@@ -189,8 +187,7 @@ void printCinemas(vector<cinema>& cinemas) {
 void printCinemas(vector<soloCinema>& cinemas) {
     int k = 1;
     beforePrint();
-    for (vector<soloCinema>::iterator i = cinemas.begin(); i < cinemas.end(); i++) {
-        soloCinema& c = *i;
+    for (soloCinema& c : cinemas) {
         printOneFilm(k, c.name, c.film);
         k++;
     }
@@ -205,23 +202,19 @@ void saveCinemas(vector<soloCinema>& cinemas, fstream& fs) {
 }
 
 void toEng(vector<cinema>& cinemas) {
-    for (vector<cinema>::iterator i = cinemas.begin(); i < cinemas.end(); i++) {
-        cinema& j = *i;
+    for (cinema& j : cinemas) {
         j.name = toEng(j.name);
-          for (vector<string>::iterator k = j.films.begin(); k < j.films.end(); k++) {
-              string& j = *k;
-              j = toEng(j);
+          for (string& k : j.films) {
+              k = toEng(k);
           }
     }
 }
 
 void toRus(vector<cinema>& cinemas) {
-    for (vector<cinema>::iterator i = cinemas.begin(); i < cinemas.end(); i++) {
-        cinema& j = *i;
+    for (cinema& j : cinemas) {
         j.name = toRus(j.name);
-        for (vector<string>::iterator k = j.films.begin(); k < j.films.end(); k++) {
-            string& j = *k;
-            j = toRus(j);
+        for (string& k : j.films) {
+            k = toRus(k);
         }
     }
 }
@@ -260,8 +253,7 @@ void removeProcess(vector<soloCinema>& soloCinemas, vector<cinema>& cinemas) {
 
 bool addFilm(vector<cinema>& cinemas, string name, string film) {
     vector<soloCinema> soloCinemas = convertToSoloCinema(cinemas);
-    for (vector<soloCinema>::iterator i = soloCinemas.begin(); i < soloCinemas.end(); i++) {
-        soloCinema& c = *i;
+    for (soloCinema& c : soloCinemas) {
         if (c.name == name && c.film == film) {
             return false;
         }
@@ -272,21 +264,21 @@ bool addFilm(vector<cinema>& cinemas, string name, string film) {
     return true;
 }
 
-bool updateCinema(vector<soloCinema>& soloCinemas, vector<cinema>& cinemas) {
+void updateCinema(vector<soloCinema>& soloCinemas, vector<cinema>& cinemas) {
     string name, film;
     cout << "Введите название кинотеатра, который хотите добавить/обновить: ";
     getline(cin >> ws, name);
     if (cin.fail()) {
         cout << "Ошибка";
         afterError();
-        return false;
+        return;
     }
     cout << "Введите название фильма, который хотите добавить: ";
     getline(cin >> ws, film);
     if (cin.fail()) {
         afterError();
         cout << "Ошибка";
-        return false;
+        return;
     }
     bool isAdded = addFilm(cinemas, name, film);
     if (isAdded) {
@@ -296,7 +288,7 @@ bool updateCinema(vector<soloCinema>& soloCinemas, vector<cinema>& cinemas) {
     else {
         cout << "Не добавлено, вводимые данные уже существуют.";
     }
-    return true;
+    return;
 }
 
 void saveToFile(vector<cinema>& cinemas) {
@@ -347,8 +339,7 @@ void generateResult1(vector<soloCinema>& cinemas, bool showText) {
     }
     beforePrintInFile(fs);
 
-    for (vector<soloCinema>::iterator i = cinemas.begin(); i != cinemas.end(); i++) {
-        soloCinema& c = *i;
+    for (soloCinema& c : cinemas) {
         if (c.film == searchFilm) {
             k++;
             if (showText)
@@ -362,12 +353,10 @@ void generateResult1(vector<soloCinema>& cinemas, bool showText) {
 
 void generateResult2(vector<cinema>& cinemas, bool showText) {
     vector<vector<soloCinema>> list;
-    int k = 0;
     if (showText)
         cout << "\n2. Список кинотеатров с одинаковым репертуаром:" << endl;
 
-    for (vector<cinema>::iterator i = cinemas.begin(); i < cinemas.end(); i++) {
-        cinema& c = *i;
+    for (cinema& c : cinemas) {
         sort(c.films.begin(), c.films.end());
     }
 
@@ -376,7 +365,6 @@ void generateResult2(vector<cinema>& cinemas, bool showText) {
     for (vector<cinema>::iterator i = cinemas.begin(); i < cinemas.end(); i++) {
         vector<soloCinema> soloCinemas;
         findedCinemas = 0;
-        k = 0;
         cinema c = *i;
 
         for (vector<cinema>::iterator j = i + 1; j < cinemas.end(); j++) {
@@ -386,17 +374,13 @@ void generateResult2(vector<cinema>& cinemas, bool showText) {
 
                 if (findedCinemas == 1) {
                     dontCheckList.push_back(i);
-                    for (vector<string>::iterator f = c.films.begin(); f < c.films.end(); f++) {
-                        k++;
-                        string& film = *f;
+                    for (string& film : c.films) {
                         soloCinemas.push_back({ c.name, film });
                     }
                 }
 
                 dontCheckList.push_back(j);
-                for (vector<string>::iterator f = c1.films.begin(); f < c1.films.end(); f++) {
-                    k++;
-                    string& film = *f;
+                for (string& film : c1.films) {
                     soloCinemas.push_back({ c1.name, film });
                 }
             }
@@ -407,7 +391,7 @@ void generateResult2(vector<cinema>& cinemas, bool showText) {
     }
 
     fstream fs;
-    k = 0;
+    int k = 0;
     fs.open(path2 + ".txt", fstream::out);
     for (auto& soloCinemas : list) {
         if (sortMode == 0 || sortMode == 1) {
@@ -441,8 +425,7 @@ void generateResult3(vector<soloCinema>& cinemas, bool showText) {
     }
     beforePrintInFile(fs);
 
-    for (vector<soloCinema>::iterator i = cinemas.begin(); i != cinemas.end(); i++) {
-        soloCinema& c = *i;
+    for (soloCinema& c : cinemas) {
         if (c.name == searchName) {
             k++;
             if (showText)
