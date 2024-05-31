@@ -1,3 +1,4 @@
+#include <limits>
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -7,8 +8,11 @@
 #include <algorithm>
 #include <conio.h>
 #include "dependencies/include/nlohmann/json.hpp"
+#include <map>
 using namespace std;
 string path1, path2, path3;
+string searchFilm = "", searchName = "";
+int sortMode = -1, nameSize = 14, filmSize = 5, idSize = 2;
 
 struct soloCinema
 {
@@ -21,6 +25,74 @@ struct cinema
     string name;
     vector<string> films;
 };
+
+void afterError() {
+    std::cin.clear();
+    std::cin.ignore(10000, '\n');
+}
+
+string getBigLine(int n) {
+    string s = "\n";
+    for (int i = 0; i < n; i++) {
+        s += '-';
+    }
+    s += '\n';
+    return s;
+}
+
+void updateSizes(vector<cinema>& cinemas) {
+    idSize = 2, nameSize = 14, filmSize = 5;
+    int k = 1, idSizeCounter = 0;
+    for (cinema& c : cinemas) {
+        for (string& film : c.films) {
+            if (k % 10 == 0) {
+                idSizeCounter++;
+            }
+
+            if (c.name.length() > nameSize) {
+                nameSize = c.name.length();
+            }
+
+            if (film.length() > filmSize) {
+                filmSize = film.length();
+            }
+
+            k++;
+        }
+    }
+
+    if (idSizeCounter > idSize)
+        idSize = idSizeCounter;
+}
+
+vector<cinema> convertToCinema(const vector<soloCinema>& soloCinemas)
+{
+    map<string, vector<string>> cinemaMap;
+    for (const auto& solo : soloCinemas)
+    {
+        cinemaMap[solo.name].push_back(solo.film);
+    }
+
+    vector<cinema> cinemas;
+    for (const auto& pair : cinemaMap)
+    {
+        cinemas.push_back({ pair.first, pair.second });
+    }
+
+    return cinemas;
+}
+
+vector<soloCinema> convertToSoloCinema(vector<cinema>& cinemas) {
+    vector<soloCinema> soloCinemas;
+
+    for (cinema& c : cinemas) {
+        for (string& film : c.films) {
+            soloCinema s = { c.name, film };
+            soloCinemas.push_back(s);
+        }
+    }
+    return soloCinemas;
+}
 
 string toEng(string& str) {
     string s;
@@ -78,27 +150,27 @@ string toRus(string& str) {
 }
 
 void beforePrint() {
-    cout << " id | ";
-    cout << "Имя кинотеатра       | ";
-    cout << "Фильм                | ";
-    cout << "\n---------------------------------------------------\n";
+    cout << " " << setw(idSize) << "id" << " | ";
+    cout << setw(nameSize) << "Имя кинотеатра" << " | ";
+    cout << setw(filmSize) << "Фильм" << " | ";
+    cout << getBigLine(idSize + nameSize + filmSize + 9);
 }
 void beforePrintInFile(fstream& fs) {
-    fs << " id | ";
-    fs << "Имя кинотеатра       | ";
-    fs << "Фильм                | ";
-    fs << "\n---------------------------------------------------\n";
+    fs << left << " " << setw(idSize) << "id" << " | ";
+    fs << setw(nameSize) << "Имя кинотеатра" << " | ";
+    fs << setw(filmSize) << "Фильм" << " | ";
+    fs << getBigLine(idSize + nameSize + filmSize + 9);
 }
 
 void printOneFilm(int id, string name, string film) {
-    cout << " " << setw(2) << id << " | ";
-    cout << setw(20) << toRus(name) << " | ";
-    cout << setw(20) << toRus(film) << " | " << endl;
+    cout << " " << setw(idSize) << id << " | ";
+    cout << setw(nameSize) << toRus(name) << " | ";
+    cout << setw(filmSize) << toRus(film) << " | " << endl;
 }
 void saveOneFilm(int id, string name, string film, fstream& fs) {
-    fs << " " << setw(2) << id << " | ";
-    fs << setw(20) << toRus(name) << " | ";
-    fs << setw(20) << toRus(film) << " | " << endl;
+    fs << left << " " << setw(idSize) << id << " | ";
+    fs << setw(nameSize) << toRus(name) << " | ";
+    fs << setw(filmSize) << toRus(film) << " | " << endl;
 }
 
 void printCinemas(vector<cinema>& cinemas) {
@@ -120,6 +192,14 @@ void printCinemas(vector<soloCinema>& cinemas) {
     for (vector<soloCinema>::iterator i = cinemas.begin(); i < cinemas.end(); i++) {
         soloCinema& c = *i;
         printOneFilm(k, c.name, c.film);
+        k++;
+    }
+}
+
+void saveCinemas(vector<soloCinema>& cinemas, fstream& fs) {
+    int k = 1;
+    for (soloCinema c : cinemas) {
+        saveOneFilm(k, c.name, c.film, fs);
         k++;
     }
 }
@@ -155,106 +235,67 @@ void from_json(const nlohmann::json& j, cinema& p) {
     j.at("films").get_to(p.films);
 }
 
-cinema& getCinemaByName(vector<cinema>& cinemas, string name) {
-    for (vector<cinema>::iterator i = cinemas.begin(); i < cinemas.end(); i++) {
-        cinema& j = *i;
-        if (j.name == name) {
-            return j;
-        }
+void removeProcess(vector<soloCinema>& soloCinemas, vector<cinema>& cinemas) {
+    printCinemas(soloCinemas);
+    int k = 0, id = 0;
+    cout << "Введите номер строки, которую хотите удалить: ";
+    cin >> id;
+    if (std::cin.fail() || id < 0) {
+        std::cout << "Ошибка.";
+        afterError();
+        return;
     }
-    cinema newCinema;
-    return newCinema;
-}
 
-void removeCinema(vector<cinema>& cinemas, string& name) {
-    for (vector<cinema>::iterator i = cinemas.begin(); i < cinemas.end(); i++) {
-        cinema& j = *i;
-        if (j.name == name) {
-            cinemas.erase(i);
+    for (vector<soloCinema>::iterator i = soloCinemas.begin(); i < soloCinemas.end(); i++) {
+        k++;
+        if (k == id) {
+            soloCinemas.erase(i);
+            cout << "Удалено!";
+            cinemas = convertToCinema(soloCinemas);
             return;
         }
     }
-}
-
-void removeProcess(vector<cinema>& cinemas) {
-    printCinemas(cinemas);
-    bool mode;
-    string name, film;
-    cout << "Введите 1, чтобы удалить кинотеатр. Введите 0, чтобы удалить фильм кинотеатра: ";
-    cin >> mode;
-    if (cin.fail()) {
-        cout << "Ошибка.";
-        return;
-    }
-
-    cout << "Введите название кинотеатра: ";
-    if (cin.peek() == '\n') cin.ignore();
-    getline(cin, name);
-
-    if (mode) {
-        removeCinema(cinemas, name);
-        cout << "Удалено!";
-        return;
-    }
-    else {
-        cout << "Введите фильм кинотеатра: ";
-        getline(cin, film);
-        cinema& c = getCinemaByName(cinemas, name);
-        vector<string>::iterator iter = find(c.films.begin(), c.films.end(), film);
-        if (iter != c.films.end()) {
-            if (c.films.size() == 1) {
-                removeCinema(cinemas, name);
-                cout << "Удалено!";
-                return;
-            }
-            else {
-                c.films.erase(iter);
-                cout << "Удалено!";
-                return;
-            }
-
-        }
-    }
-    cout << "Не удалено, возможно такого фильма или кинотеатра не существует.";
+    cout << "Не удалено, возможно такой строки не существует";
 }
 
 bool addFilm(vector<cinema>& cinemas, string name, string film) {
-    for (vector<cinema>::iterator i = cinemas.begin(); i < cinemas.end(); i++) {
-        cinema& j = *i;
-        if (j.name == name) {
-            if (find(j.films.begin(), j.films.end(), film) != j.films.end()) {
-                return false;
-            }
-            else {
-                j.films.push_back(film);
-                return true;
-            }
+    vector<soloCinema> soloCinemas = convertToSoloCinema(cinemas);
+    for (vector<soloCinema>::iterator i = soloCinemas.begin(); i < soloCinemas.end(); i++) {
+        soloCinema& c = *i;
+        if (c.name == name && c.film == film) {
+            return false;
         }
     }
-    cinema c = { name, {film} };
-    cinemas.push_back(c);
+    soloCinema s = {name, film};
+    soloCinemas.push_back(s);
+    cinemas = convertToCinema(soloCinemas);
     return true;
 }
 
-bool updateCinema(vector<cinema>& cinemas) {
+bool updateCinema(vector<soloCinema>& soloCinemas, vector<cinema>& cinemas) {
     string name, film;
     cout << "Введите название кинотеатра, который хотите добавить/обновить: ";
-    getline(cin, name);
+    getline(cin >> ws, name);
     if (cin.fail()) {
         cout << "Ошибка";
+        afterError();
         return false;
     }
     cout << "Введите название фильма, который хотите добавить: ";
-    getline(cin, film);
+    getline(cin >> ws, film);
     if (cin.fail()) {
+        afterError();
         cout << "Ошибка";
         return false;
     }
     bool isAdded = addFilm(cinemas, name, film);
-    if (isAdded)
+    if (isAdded) {
         cout << "Добавлено!";
-    else
+        soloCinemas = convertToSoloCinema(cinemas);
+    }
+    else {
         cout << "Не добавлено, вводимые данные уже существуют.";
+    }
     return true;
 }
 
@@ -272,99 +313,59 @@ void saveToFile(vector<cinema>& cinemas) {
     toRus(cinemas);
 }
 
-vector<soloCinema> convertToSoloCinema(vector<cinema>& cinemas) {
-    vector<soloCinema> soloCinemas;
-
-    for (vector<cinema>::iterator i = cinemas.begin(); i < cinemas.end(); i++) {
-        cinema& c = *i;
-        vector<string> films = c.films;
-        for (vector<string>::iterator j = films.begin(); j < films.end(); j++) {
-            soloCinema s = { c.name, *j };
-            soloCinemas.push_back(s);
-        }
-    }
-    return soloCinemas;
-}
-
-void sortCinemasByName(vector<cinema>& cinemas, bool mode = 1) {
+void sortCinemasByName(vector<soloCinema>& cinemas, bool mode = 1) {
     // mode == 1 сортирует по алфавиту от А до Я
     if (mode) {
-        sort(cinemas.begin(), cinemas.end(), [](cinema& c1, cinema& c2) { return c1.name < c2.name; });
+        sort(cinemas.begin(), cinemas.end(), [](soloCinema& c1, soloCinema& c2) { return c1.name < c2.name; });
     }
     else {
-        sort(cinemas.begin(), cinemas.end(), [](cinema& c1, cinema& c2) { return c1.name > c2.name; });
+        sort(cinemas.begin(), cinemas.end(), [](soloCinema& c1, soloCinema& c2) { return c1.name > c2.name; });
     }
+    sortMode = mode;
 }
 
-void sortCinemasByfilms(vector<cinema>& cinemas, bool mode = 1) {
-    vector<soloCinema> soloCinemas;
-
-    for (vector<cinema>::iterator i = cinemas.begin(); i < cinemas.end(); i++) {
-        cinema& c = *i;
-        vector<string> films = c.films;
-        for (vector<string>::iterator j = films.begin(); j < films.end(); j++) {
-            soloCinema s = { c.name, *j };
-            soloCinemas.push_back(s);
-        }
-    }
-
+void sortCinemasByfilms(vector<soloCinema>& cinemas, bool mode = 1) {
+    // mode == 1 сортирует по алфавиту от А до Я
     if (mode) {
-        sort(soloCinemas.begin(), soloCinemas.end(), [](soloCinema& c1, soloCinema& c2) { return c1.film < c2.film; });
+        sort(cinemas.begin(), cinemas.end(), [](soloCinema& c1, soloCinema& c2) { return c1.film < c2.film; });
     }
     else {
-        sort(soloCinemas.begin(), soloCinemas.end(), [](soloCinema& c1, soloCinema& c2) { return c1.film > c2.film; });
+        sort(cinemas.begin(), cinemas.end(), [](soloCinema& c1, soloCinema& c2) { return c1.film > c2.film; });
     }
-    printCinemas(soloCinemas);
+    sortMode = 2 + mode;
 }
 
-void generateResult1(string path1, string path2, string path3, vector<cinema>& cinemas) {
-    vector<cinema> cinemasCopy = cinemas;
+void generateResult1(vector<soloCinema>& cinemas, bool showText) {
     int k = 0;
-    string film;
     fstream fs;
     fs.open(path1 + ".txt", fstream::out);
-    cout << "\n1. Введите фильм, который будет искаться в репертуаре кинотеатров: ";
-    if (cin.peek() == '\n') cin.ignore();
-    getline(cin, film);
-    cout << "Кинотеатры, содержащие фильм " << film << ":" << endl;
-    beforePrint();
+    if (showText) {
+        cout << "\n1. Введите фильм, который будет искаться в репертуаре кинотеатров: ";
+        getline(cin >> ws, searchFilm);
+        cout << "Кинотеатры, содержащие фильм " << searchFilm << ":" << endl;
+        beforePrint();
+    }
     beforePrintInFile(fs);
 
-    for (vector<cinema>::iterator i = cinemas.begin(); i != cinemas.end(); ) {
-        cinema& c = *i;
-        vector<string>& films = c.films;
-        for (vector<string>::iterator j = films.begin(); j != films.end(); ) {
-            if (*j == film) {
-                k++;
-                printOneFilm(k, c.name, film);
-                saveOneFilm(k, c.name, film, fs);
-                ++j;
-            }
-            else {
-                j = films.erase(j);
-            }
-        }
-        if (films.size() == 0) {
-            i = cinemas.erase(i);
-        }
-        else {
-            ++i;
+    for (vector<soloCinema>::iterator i = cinemas.begin(); i != cinemas.end(); i++) {
+        soloCinema& c = *i;
+        if (c.film == searchFilm) {
+            k++;
+            if (showText)
+                printOneFilm(k, c.name, c.film);
+
+            saveOneFilm(k, c.name, c.film, fs);
         }
     }
     fs.close();
-
-    bool mode;
-    cout << "Скопировать таблицу? (1 - да, 0 - нет): ";
-    cin >> mode;
-    if (!mode || cin.fail()) {
-        cinemas = cinemasCopy;
-    }
 }
 
-void generateResult2(string path1, string path2, string path3, vector<cinema>& cinemas) {
-    int k = 0, groupCounter = 0;
-    fstream fs;
-    cout << "\n2. Список кинотеатров с одинаковым репертуаром:" << endl;
+void generateResult2(vector<cinema>& cinemas, bool showText) {
+    vector<vector<soloCinema>> list;
+    int k = 0;
+    if (showText)
+        cout << "\n2. Список кинотеатров с одинаковым репертуаром:" << endl;
+
     for (vector<cinema>::iterator i = cinemas.begin(); i < cinemas.end(); i++) {
         cinema& c = *i;
         sort(c.films.begin(), c.films.end());
@@ -372,10 +373,8 @@ void generateResult2(string path1, string path2, string path3, vector<cinema>& c
 
     vector<vector<cinema>::iterator> dontCheckList;
     int findedCinemas = 0;
-    fs.open(path2 + ".txt", fstream::out);
-    beforePrint();
-    beforePrintInFile(fs);
     for (vector<cinema>::iterator i = cinemas.begin(); i < cinemas.end(); i++) {
+        vector<soloCinema> soloCinemas;
         findedCinemas = 0;
         k = 0;
         cinema c = *i;
@@ -386,15 +385,11 @@ void generateResult2(string path1, string path2, string path3, vector<cinema>& c
                 findedCinemas++;
 
                 if (findedCinemas == 1) {
-                    groupCounter++;
-                    cout << "Группа #" << groupCounter << ":\n";
-                    fs << "Группа #" << groupCounter << ":\n";
                     dontCheckList.push_back(i);
                     for (vector<string>::iterator f = c.films.begin(); f < c.films.end(); f++) {
                         k++;
                         string& film = *f;
-                        printOneFilm(k, c.name, film);
-                        saveOneFilm(k, c.name, film, fs);
+                        soloCinemas.push_back({ c.name, film });
                     }
                 }
 
@@ -402,59 +397,75 @@ void generateResult2(string path1, string path2, string path3, vector<cinema>& c
                 for (vector<string>::iterator f = c1.films.begin(); f < c1.films.end(); f++) {
                     k++;
                     string& film = *f;
-                    printOneFilm(k, c1.name, film);
-                    saveOneFilm(k, c1.name, film, fs);
+                    soloCinemas.push_back({ c1.name, film });
                 }
-
             }
+        }
+        if (soloCinemas.size() > 0) {
+            list.push_back(soloCinemas);
+        }
+    }
+
+    fstream fs;
+    k = 0;
+    fs.open(path2 + ".txt", fstream::out);
+    for (auto& soloCinemas : list) {
+        if (sortMode == 0 || sortMode == 1) {
+            sortCinemasByName(soloCinemas, sortMode);
+        }
+        else if (sortMode == 2 || sortMode == 3) {
+            sortCinemasByfilms(soloCinemas,sortMode - 2);
+        }
+
+        if (showText) {
+            cout << "Группа #" << ++k << endl;
+            printCinemas(soloCinemas);
+        }
+
+        fs << "Группа #" << k << endl;
+        beforePrintInFile(fs);
+        saveCinemas(soloCinemas, fs);
+    }
+    fs.close();
+}
+
+void generateResult3(vector<soloCinema>& cinemas, bool showText) {
+    int k = 0;
+    fstream fs;
+    fs.open(path3 + ".txt", fstream::out);
+    if (showText) {
+        cout << "\n3. Имя кинотеатра, список фильмов которого вывести в консоль: ";
+        getline(cin >> ws, searchName);
+        cout << "Фильмы кинотеатра " << searchName << ":\n";
+        beforePrint();
+    }
+    beforePrintInFile(fs);
+
+    for (vector<soloCinema>::iterator i = cinemas.begin(); i != cinemas.end(); i++) {
+        soloCinema& c = *i;
+        if (c.name == searchName) {
+            k++;
+            if (showText)
+                printOneFilm(k, c.name, c.film);
+
+            saveOneFilm(k, c.name, c.film, fs);
         }
     }
     fs.close();
 }
 
-void generateResult3(string path1, string path2, string path3, vector<cinema>& cinemas) {
-    vector<cinema> cinemasCopy = cinemas;
-    int k = 0;
-    string name;
-    fstream fs;
-    cout << "\n3. Имя кинотеатра, список фильмов которого вывести в консоль: ";
-    if (cin.peek() == '\n') cin.ignore();
-    getline(cin, name);
-    cout << "Фильмы кинотеатра " << name << ":\n";
-    fs.open(path3 + ".txt", fstream::out);
-    beforePrint();
-    beforePrintInFile(fs);
-
-    for (vector<cinema>::iterator i = cinemas.begin(); i < cinemas.end(); ) {
-        cinema& c = *i;
-        if (c.name == name) {
-            for (vector<string>::iterator j = c.films.begin(); j < c.films.end(); j++) {
-                string& film = *j;
-                k++;
-                printOneFilm(k, name, film);
-                saveOneFilm(k, name, film, fs);
-            }
-            i++;
-        }
-        else {
-            i = cinemas.erase(i);
-        }
-    }
-    fs.close();
-    bool mode;
-    cout << "Скопировать таблицу? (1 - да, 0 - нет): ";
-    cin >> mode;
-    if (!mode || cin.fail()) {
-        cinemas = cinemasCopy;
-    }
+void updateResults(vector<soloCinema>& soloCinemas, vector<cinema>& cinemas) {
+    generateResult1(soloCinemas, 0);
+    generateResult2(cinemas, 0);
+    generateResult3(soloCinemas, 0);
 }
 
 const int buttonsCount = 10;
 
-void showMenu(int menu, vector<cinema>& cinemas) {
+void showMenu(int menu, vector<soloCinema>& soloCinemas) {
     string* text = new string[buttonsCount]{ "1. Найти кинотеатры, среди которых есть вводимый фильм", "2. Найти кинотеатры с одинаковым репертуаром", "3. Найти список фильмов вводимого кинотеатра", "4. Отсортировать по названию кинотеатра (по возрастанию)", "5. Отсортировать по названию кинотеатра (по убыванию)", "6. Отсортировать по фильмам (по возрастанию)", "7. Отсортировать по фильмам (по убыванию)", "8. Добавить фильм/кинотеатр", "9. Удалить фильм/кинотеатр", "10. Сохранить в файл"};
     system("cls");
-    printCinemas(cinemas);
+    printCinemas(soloCinemas);
     cout << endl;
     for (int i = 0; i < buttonsCount; i++) {
         if (i == menu) {
@@ -468,8 +479,8 @@ void showMenu(int menu, vector<cinema>& cinemas) {
     }
 }
 
-void startCycle(vector<cinema>& cinemas, int& menu) {
-    showMenu(menu, cinemas);
+void startCycle(vector<cinema>& cinemas, vector<soloCinema>& soloCinemas, int& menu) {
+    showMenu(menu, soloCinemas);
     int ch;
     bool cycle = true;
     while (cycle) {
@@ -485,7 +496,7 @@ void startCycle(vector<cinema>& cinemas, int& menu) {
         }
 
         if (ch != 13) {
-            showMenu(menu, cinemas);
+            showMenu(menu, soloCinemas);
         }
         else {
             cycle = false;
@@ -493,38 +504,49 @@ void startCycle(vector<cinema>& cinemas, int& menu) {
             switch (menu)
             {
             case 0:
-                generateResult1(path1, path2, path3, cinemas);
+                generateResult1(soloCinemas, 1);
                 break;
             case 1:
-                generateResult2(path1, path2, path3, cinemas);
+                generateResult2(cinemas, 1);
                 break;
             case 2:
-                generateResult3(path1, path2, path3, cinemas);
+                generateResult3(soloCinemas, 1);
                 break;
             case 3:
-                sortCinemasByName(cinemas);
-                printCinemas(cinemas);
+                sortCinemasByName(soloCinemas);
+                updateResults(soloCinemas, cinemas);
+                printCinemas(soloCinemas);
                 break;
             case 4:
-                sortCinemasByName(cinemas, 0);
-                printCinemas(cinemas);
+                sortCinemasByName(soloCinemas, 0);
+                updateResults(soloCinemas, cinemas);
+                printCinemas(soloCinemas);
                 break;
             case 5:
-                sortCinemasByfilms(cinemas);
+                sortCinemasByfilms(soloCinemas);
+                updateResults(soloCinemas, cinemas);
+                printCinemas(soloCinemas);
                 break;
             case 6:
-                sortCinemasByfilms(cinemas, 0);
+                sortCinemasByfilms(soloCinemas, 0);
+                updateResults(soloCinemas, cinemas);
+                printCinemas(soloCinemas);
                 break;
             case 7:
-                updateCinema(cinemas);
+                updateCinema(soloCinemas, cinemas);
+                updateSizes(cinemas);
+                updateResults(soloCinemas, cinemas);
                 break;
             case 8:
-                removeProcess(cinemas);
+                removeProcess(soloCinemas, cinemas);
+                updateSizes(cinemas);
+                updateResults(soloCinemas, cinemas);
                 break;
             case 9:
                 saveToFile(cinemas);
                 break;
             }
+            cinemas = convertToCinema(soloCinemas);
         }
     }
 }
@@ -549,6 +571,7 @@ int main()
     bool mode;
     cin >> mode;
     if (cin.fail()) {
+        afterError();
         cout << "Ошибка";
         return 0;
     }
@@ -570,6 +593,11 @@ int main()
 
     cout << "Ввод исходных данных с клавиатуры? 1 - да, 0 - нет: ";
     cin >> mode;
+    if (cin.fail()) {
+        afterError();
+        cout << "Ошибка";
+        return 0;
+    }
 
     if (mode) {
         unsigned int cinemasCount, filmsCount;
@@ -577,25 +605,21 @@ int main()
         cin >> cinemasCount;
         if (cinemasCount > 0) {
             string film, name;
-            getline(cin, name);
             for (int i = 0; i < cinemasCount; i++) {
                 cout << "Введите название кинотеатра " << i + 1 << ": ";
-                cin.sync();
-                getline(cin, name);
+                getline(cin >> ws, name);
 
                 cout << "Сколько фильмов будет в кинотеатре?: ";
                 cin >> filmsCount;
-                cin.sync();
-                getline(cin, film);
+
                 for (int j = 0; j < filmsCount; j++) {
                     cout << "Введите фильм " << j + 1 << ": ";
-                    cin.sync();
-
-                    getline(cin, film);
+                    getline(cin >> ws, film);
                     addFilm(cinemas, toEng(name), toEng(film));
 
                 }
             }
+            updateSizes(cinemas);
             printCinemas(cinemas);
         }
 
@@ -629,18 +653,18 @@ int main()
             nlohmann::json j;
             fs >> j;
             cinemas = j;
+            updateSizes(cinemas);
             printCinemas(cinemas);
         }
 
         fs.close();
     }
 
-    string str;
-    getline(cin, str);
     toRus(cinemas);
+    vector<soloCinema> soloCinemas = convertToSoloCinema(cinemas);
     int menu = 0;
     while (true) {
-        startCycle(cinemas, menu);
+        startCycle(cinemas, soloCinemas, menu);
         _getch();
     }
 
