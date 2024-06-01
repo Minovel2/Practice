@@ -94,12 +94,13 @@ vector<soloCinema> convertToSoloCinema(vector<cinema>& cinemas) {
     return soloCinemas;
 }
 
+const string rus = "йцукенгшщзхъфывапролджэячсмитьбю";
+const string eng = "qwertyuiop[]asdfghjkl;'zxcvbnm,.";
+const string rusUp = "ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ";
+const string engUp = "QWERTYUIOP()ASDFGHJKL:!ZXCVBNM+=";
+
 string toEng(string& str) {
     string s;
-    const string rus = "йцукенгшщзхъфывапролджэячсмитьбю";
-    const string eng = "qwertyuiop[]asdfghjkl;'zxcvbnm,.";
-    const string rusUp = "ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ";
-    const string engUp = "QWERTYUIOP()ASDFGHJKL:!ZXCVBNM+=";
 
     for (size_t i = 0; i < str.length(); i++)
     {
@@ -123,10 +124,6 @@ string toEng(string& str) {
 
 string toRus(string& str) {
     string s;
-    const string rus = "йцукенгшщзхъфывапролджэячсмитьбю";
-    const string eng = "qwertyuiop[]asdfghjkl;'zxcvbnm,.";
-    const string rusUp = "ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ";
-    const string engUp = "QWERTYUIOP()ASDFGHJKL:!ZXCVBNM+=";
 
     for (size_t i = 0; i < str.length(); i++)
     {
@@ -243,8 +240,8 @@ void removeProcess(vector<soloCinema>& soloCinemas, vector<cinema>& cinemas) {
         k++;
         if (k == id) {
             soloCinemas.erase(i);
-            cout << "Удалено!";
             cinemas = convertToCinema(soloCinemas);
+            cout << "Удалено!";
             return;
         }
     }
@@ -369,7 +366,7 @@ void generateResult2(vector<cinema>& cinemas, bool showText) {
 
         for (vector<cinema>::iterator j = i + 1; j < cinemas.end(); j++) {
             cinema c1 = *j;
-            if (c.films == c1.films && std::find(dontCheckList.begin(), dontCheckList.end(), j) == dontCheckList.end()) {
+            if (c.films == c1.films && find(dontCheckList.begin(), dontCheckList.end(), j) == dontCheckList.end()) {
                 findedCinemas++;
 
                 if (findedCinemas == 1) {
